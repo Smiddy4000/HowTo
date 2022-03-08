@@ -1,4 +1,4 @@
-# How To - A place to Help people with Tips and Ideas
+# Smiddies how to - A place to help people with tips and ideas
 
 ## All Code is provided for the purpose of illustration only and is not intended to be used in a production environment.
 
