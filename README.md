@@ -1,4 +1,4 @@
-# Smiddies How To 
+# Smiddies Corner
 
 ## A place to help people with tips and ideas
 
