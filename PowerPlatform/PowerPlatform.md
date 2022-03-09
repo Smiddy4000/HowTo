@@ -1,4 +1,4 @@
-# Example Azure DevOps Pipeline Definition to use Power Platform CLI in Azure DevOps Pipeline Build Tasks
+# Example Azure DevOps Pipeline Definition to use Power Platform CLI
 1. NuGet tool Installer Task
 2. NuGet Command 
    - Commanmd
