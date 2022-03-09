@@ -1,37 +1,67 @@
-## Welcome to GitHub Pages
+# Example Azure DevOps Pipeline Definition to use Power Platform CLI
+1. NuGet tool Installer Task
+2. NuGet Command 
+   - Commanmd
+     - Custom
+   - Custom Command and Arguments
+     - install Microsoft.PowerApps.CLI -OutputDirectory pac
+3. PowerShell Task
+   - Type
+     - Inline
+   - Script
+<pre><code class="language-powershell">##PowerShell SCRIPT
+##$(connectionUrl) - String Stored as Pipeline variable. e.g. https://organisation.crm6.dynamics.com
+##$(applicationId) - environment spn - Secure String Stored as Pipeline variable or linked KeyVault
+##$(clientSecret) - spn secret - Secure String Stored as Pipeline variable or linked KeyVault
+##$(environmentName) environment - String Stored as Pipeline variable
+##$(portalId) - GUID representing the Website in PowerApps Portals - found in Portal Management App
 
-You can use the [editor on GitHub](https://github.com/Smiddy4000/HowTo/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+$pacFolder = Get-ChildItem "pac" | Where-Object {$_.Name -match "Microsoft.PowerApps.CLI."}
+$env:PATH = $env:PATH + ";" + $pacFolder.FullName + "\tools"
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Execute your commands using PowerPlatform CLI.
+## authenticate to your environment
+pac auth create -u $(connectionUrl) -n $(environmentName) -id $(applicationId) -cs $(clientSecret)
 
-### Markdown
+## execute portal download directly to the staging directory portal path to be used later
+pac paportal  download -p "$(Build.ArtifactStagingDirectory)\portal" -id $(portalId)
+</code></pre>
+4. Publish Artifact
+   - Accept Defaults unless different download directory is specified in PowerShell script
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
 
-```markdown
-Syntax highlighted code block
+The YAML is as per above in the class editor
+<pre><code>pool:
+  name: Azure Pipelines
+variables:
+  connectionUrl: ''
+  applicationId: ''
+  clientSecret: ''
+  portalId: ''
+  environmentName: ''
 
-# Header 1
-## Header 2
-### Header 3
+steps:
+- task: NuGetToolInstaller@1
+  displayName: 'Use NuGet'
 
-- Bulleted
-- List
+- task: NuGetCommand@2
+  displayName: 'Install PowerPlatform CLI'
+  inputs:
+    command: custom
+    arguments: 'install Microsoft.PowerApps.CLI -OutputDirectory pac'
 
-1. Numbered
-2. List
+- powershell: |
+   $pacFolder = Get-ChildItem "pac" | Where-Object {$_.Name -match "Microsoft.PowerApps.CLI."}
+   $env:PATH = $env:PATH + ";" + $pacFolder.FullName + "\tools"
+   
+   ## Execute your commands using PowerPlatform CLI.
+   ## authenticate to your environment
+   pac auth create -u $(connectionUrl) -n $(environmentName) -id $(applicationId) -cs $(clientSecret)
+   
+   ## execute portal download directly to the staging directory portal path to be used later
+   pac paportal  download -p "$(Build.ArtifactStagingDirectory)\portal" -id $(portalId)
+  displayName: 'Download Portal Package'
 
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Smiddy4000/HowTo/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+</code></pre>
